@@ -10,7 +10,7 @@ api_key = st.sidebar.text_input("Nhập Gemini API Key của bạn:", type="pass
 if api_key:
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('models/gemini-1.5-flash')
         de_bai = st.text_input("Đề bài:")
         bai_lam = st.text_area("Bài làm của học sinh:", height=300)
         if st.button("Bắt đầu chấm bài"):
