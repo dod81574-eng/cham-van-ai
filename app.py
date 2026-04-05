@@ -1,49 +1,26 @@
 import streamlit as st
-from openai import OpenAI
+import google.generativeai as genai
 
-# 1. Cấu hình giao diện
-st.set_page_config(page_title="Hệ thống Chấm điểm Ngữ văn AI", layout="centered")
+st.set_page_config(page_title="Chấm Ngữ Văn AI", layout="centered")
 st.title("📝 Trình Chấm bài Ngữ văn Thông minh")
-st.subheader("Dành cho sinh viên và giáo viên Ngữ văn")
 
-# 2. Nhập API Key (Bạn lấy từ trang web của OpenAI)
-api_key = st.sidebar.text_input("Nhập OpenAI API Key của bạn:", type="password")
+# Nhập Key từ Google AI Studio
+api_key = st.sidebar.text_input("Nhập Gemini API Key của bạn:", type="password")
 
 if api_key:
-    client = OpenAI(api_key=api_key)
-
-    # 3. Giao diện nhập liệu
-    de_bai = st.text_input("Đề bài:", placeholder="Ví dụ: Phân tích nhân vật Huấn Cao...")
-    bai_lam = st.text_area("Dán bài làm của học sinh vào đây:", height=300)
-
-    if st.button("Bắt đầu chấm bài"):
-        if bai_lam:
-            with st.spinner('AI đang đọc và phân tích bài viết...'):
-                # 4. Thiết lập Prompt (Hồn cốt của việc chấm điểm)
-                prompt = f"""
-                Bạn là một chuyên gia chấm thi Ngữ văn. Hãy chấm bài dựa trên đề bài: "{de_bai}"
-                Nội dung bài làm: "{bai_lam}"
-                
-                Hãy phản hồi theo cấu trúc sau:
-                1. Điểm số: (Thang điểm 10)
-                2. Ưu điểm: (Các ý chính, cách dùng từ)
-                3. Nhược điểm: (Lỗi diễn đạt, thiếu ý, logic)
-                4. Lời khuyên cải thiện:
-                """
-
-                # 5. Gọi AI xử lý
-                response = client.chat.completions.create(
-                    model="gpt-4o", # Hoặc gpt-3.5-turbo để tiết kiệm
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                
-                ket_qua = response.choices[0].message.content
-                
-                # 6. Hiển thị kết quả ra màn hình
-                st.success("Đã chấm xong!")
-                st.markdown("---")
-                st.markdown(ket_qua)
-        else:
-            st.error("Vui lòng dán nội dung bài làm trước khi chấm!")
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        de_bai = st.text_input("Đề bài:")
+        bai_lam = st.text_area("Bài làm của học sinh:", height=300)
+        if st.button("Bắt đầu chấm bài"):
+            if bai_lam:
+                with st.spinner('Đang chấm...'):
+                    prompt = f"Bạn là giáo viên Văn. Chấm bài dựa trên đề: {de_bai}. Nội dung: {bai_lam}. Trả về điểm số và nhận xét chi tiết."
+                    response = model.generate_content(prompt)
+                    st.success("Xong!")
+                    st.markdown(response.text)
+    except Exception as e:
+        st.error(f"Lỗi: {e}")
 else:
-    st.info("Vui lòng nhập API Key ở cột bên trái để bắt đầu.")
+    st.info("Vui lòng dán API Key từ Google AI Studio vào bên trái.")
