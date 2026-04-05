@@ -1,8 +1,31 @@
 import streamlit as st
 import google.generativeai as genai
 
+# 1. Cấu hình giao diện và màu sắc xanh lá
 st.set_page_config(page_title="Chấm Ngữ Văn AI", layout="centered")
-st.title("📝 Trình Chấm bài Ngữ văn Thông minh")
+
+# Thêm CSS để đổi màu nút bấm và tiêu đề sang xanh lá
+st.markdown("""
+    <style>
+    .stButton>button {
+        background-color: #2e7d32;
+        color: white;
+        border-radius: 10px;
+        border: None;
+        width: 100%;
+    }
+    .stButton>button:hover {
+        background-color: #1b5e20;
+        color: white;
+    }
+    h1 {
+        color: #2e7d32;
+    }
+    </style>
+    """, unsafe_allow_stdio=True)
+
+st.title("🌿 Trình Chấm bài Ngữ văn Thông minh")
+st.subheader("Dành cho sinh viên và giáo viên Ngữ văn")
 
 # Nhập Key từ Google AI Studio
 api_key = st.sidebar.text_input("Nhập Gemini API Key của bạn:", type="password")
@@ -10,9 +33,10 @@ api_key = st.sidebar.text_input("Nhập Gemini API Key của bạn:", type="pass
 if api_key:
     try:
         genai.configure(api_key=api_key)
-        # Sử dụng gemini-1.5-flash trực tiếp, không có models/ phía trước
-       model = genai.GenerativeModel('gemini-pro')
-        de_bai = st.text_input("Đề bài:", placeholder="Ví dụ: Phân tích bài thơ...")
+        # Đổi sang gemini-pro để tránh lỗi 404
+        model = genai.GenerativeModel('gemini-pro')
+        
+        de_bai = st.text_input("Đề bài:", placeholder="Ví dụ: Ý nghĩa của lòng dũng cảm...")
         bai_lam = st.text_area("Bài làm của học sinh:", height=300)
         
         if st.button("Bắt đầu chấm bài"):
@@ -26,7 +50,6 @@ if api_key:
             else:
                 st.error("Vui lòng dán nội dung bài làm!")
     except Exception as e:
-        # Nếu vẫn lỗi 404, thử đổi model thành gemini-pro
-        st.error(f"Lỗi: {e}. Thử đổi model trong code thành 'gemini-pro'.")
+        st.error(f"Lỗi hệ thống: {e}")
 else:
-    st.info("Vui lòng dán API Key từ Google AI Studio vào bên trái.")
+    st.info("Vui lòng dán API Key từ Google AI Studio vào ô bên trái để bắt đầu.")
