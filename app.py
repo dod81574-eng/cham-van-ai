@@ -11,8 +11,7 @@ if api_key:
     try:
         genai.configure(api_key=api_key)
         # Sử dụng gemini-1.5-flash trực tiếp, không có models/ phía trước
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
+       model = genai.GenerativeModel('gemini-pro')
         de_bai = st.text_input("Đề bài:", placeholder="Ví dụ: Phân tích bài thơ...")
         bai_lam = st.text_area("Bài làm của học sinh:", height=300)
         
