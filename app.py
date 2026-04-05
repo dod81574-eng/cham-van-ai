@@ -1,26 +1,17 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Cấu hình giao diện và màu sắc xanh lá
 st.set_page_config(page_title="Chấm Ngữ Văn AI", layout="centered")
 
+# Giao diện xanh lá cho Khang
 st.markdown("""
     <style>
-    .stButton>button {
-        background-color: #2e7d32 !important;
-        color: white !important;
-        border-radius: 10px;
-        border: None;
-        width: 100%;
-        height: 3em;
-        font-weight: bold;
-    }
+    .stButton>button { background-color: #2e7d32 !important; color: white !important; border-radius: 10px; width: 100%; font-weight: bold; }
     h1 { color: #2e7d32; }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("🌿 Trình Chấm bài Ngữ văn Thông minh")
-st.subheader("Dành cho sinh viên và giáo viên Ngữ văn")
 
 api_key = st.sidebar.text_input("Nhập Gemini API Key của bạn:", type="password")
 
@@ -28,29 +19,36 @@ if api_key:
     try:
         genai.configure(api_key=api_key)
         
-        # Cách gọi model mới nhất để tránh lỗi 404
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        # Chiến thuật thử lần lượt các model để tránh lỗi 404
+        model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+        model = None
         
-        de_bai = st.text_input("Đề bài:", placeholder="Ví dụ: Ý nghĩa của lòng dũng cảm...")
-        bai_lam = st.text_area("Bài làm của học sinh:", height=300)
-        
-        if st.button("Bắt đầu chấm bài"):
-            if bai_lam:
-                with st.spinner('AI đang đọc và chấm bài...'):
-                    # Prompt chuyên nghiệp
-                    prompt = f"Bạn là giáo viên Văn chuyên nghiệp. Hãy chấm bài dựa trên đề: {de_bai}. Nội dung: {bai_lam}. Trả về: 1. Điểm số (thang 10), 2. Nhận xét ưu/nhược, 3. Cách cải thiện."
-                    
-                    # Gọi hàm tạo nội dung
-                    response = model.generate_content(prompt)
-                    
-                    st.success("Đã chấm xong!")
-                    st.markdown("---")
-                    st.markdown(response.text)
-            else:
-                st.error("Vui lòng dán nội dung bài làm!")
+        for name in model_names:
+            try:
+                model = genai.GenerativeModel(name)
+                # Thử tạo một nội dung ngắn để test model có sống không
+                model.generate_content("test", generation_config={"max_output_tokens": 1})
+                break 
+            except:
+                continue
+
+        if model:
+            de_bai = st.text_input("Đề bài:")
+            bai_lam = st.text_area("Bài làm của học sinh:", height=250)
+            
+            if st.button("Bắt đầu chấm bài"):
+                if bai_lam:
+                    with st.spinner('Đang phân tích bài làm...'):
+                        prompt = f"Bạn là giáo viên Ngữ văn. Hãy chấm bài dựa trên đề: {de_bai}. Nội dung: {bai_lam}. Trả về điểm và nhận xét."
+                        response = model.generate_content(prompt)
+                        st.success("Xong!")
+                        st.markdown(response.text)
+                else:
+                    st.warning("Vui lòng nhập bài làm!")
+        else:
+            st.error("Không tìm thấy model khả dụng. Hãy kiểm tra lại API Key của bạn.")
+            
     except Exception as e:
-        # Nếu vẫn lỗi, hiển thị thông báo hướng dẫn cụ thể
         st.error(f"Lỗi: {e}")
-        st.info("Mẹo: Hãy thử tạo một API Key mới tại Google AI Studio và dán lại vào đây.")
 else:
-    st.info("Vui lòng dán API Key từ Google AI Studio vào ô bên trái để bắt đầu.")
+    st.info("Vui lòng dán API Key vào bên trái.")
