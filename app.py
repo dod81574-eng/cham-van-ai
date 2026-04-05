@@ -13,44 +13,29 @@ st.markdown("""
 
 st.title("🌿 Trình Chấm bài Ngữ văn Thông minh")
 
-api_key = st.sidebar.text_input("Nhập Gemini API Key của bạn:", type="password")
+# Lấy API Key từ Secrets (Không hiện ra giao diện nữa)
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+    genai.configure(api_key=api_key)
+    
+    # Tự động lấy model khả dụng
+    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+    model_to_use = "gemini-1.5-flash" if any("1.5-flash" in m for m in available_models) else available_models[0]
+    model = genai.GenerativeModel(model_name=model_to_use)
 
-if api_key:
-    try:
-        genai.configure(api_key=api_key)
-        
-        # --- BƯỚC QUAN TRỌNG: TỰ ĐỘNG TÌM MODEL ---
-        # Code này sẽ tự lấy cái model đầu tiên mà tài khoản bạn được phép dùng
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        if available_models:
-            # Ưu tiên lấy bản flash hoặc pro nếu có, không thì lấy cái đầu tiên
-            model_to_use = available_models[0]
-            for m in available_models:
-                if "1.5-flash" in m:
-                    model_to_use = m
-                    break
-            
-            model = genai.GenerativeModel(model_name=model_to_use)
-            st.sidebar.success(f"Đang dùng: {model_to_use}") # Hiện tên model cho bạn yên tâm
-            
-            de_bai = st.text_input("Đề bài:", placeholder="Ví dụ: Phân tích Truyện Kiều...")
-            bai_lam = st.text_area("Bài làm của học sinh:", height=250)
-            
-            if st.button("Bắt đầu chấm bài"):
-                if bai_lam:
-                    with st.spinner('Đang phân tích bài làm...'):
-                        prompt = f"Bạn là giáo viên Ngữ văn. Hãy chấm bài dựa trên đề: {de_bai}. Nội dung: {bai_lam}. Trả về điểm và nhận xét chi tiết."
-                        response = model.generate_content(prompt)
-                        st.success("Đã chấm xong!")
-                        st.markdown("---")
-                        st.markdown(response.text)
-                else:
-                    st.warning("Vui lòng nhập bài làm!")
+    de_bai = st.text_input("Đề bài:", placeholder="Ví dụ: Phân tích Truyện Kiều...")
+    bai_lam = st.text_area("Bài làm của học sinh:", height=300)
+
+    if st.button("Bắt đầu chấm bài"):
+        if bai_lam:
+            with st.spinner('AI đang phân tích bài làm...'):
+                prompt = f"Bạn là giáo viên Văn. Hãy chấm bài dựa trên đề: {de_bai}. Nội dung: {bai_lam}. Trả về điểm và nhận xét."
+                response = model.generate_content(prompt)
+                st.success("Đã chấm xong!")
+                st.markdown("---")
+                st.markdown(response.text)
         else:
-            st.error("Tài khoản của bạn chưa có model nào khả dụng. Hãy thử tạo Key mới.")
+            st.warning("Vui lòng nhập bài làm!")
             
-    except Exception as e:
-        st.error(f"Lỗi: {e}")
-else:
-    st.info("Vui lòng dán API Key vào bên trái.")
+except Exception as e:
+    st.error("Hệ thống đang bảo trì hoặc thiếu API Key.")
