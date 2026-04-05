@@ -13,22 +13,21 @@ st.markdown("""
 
 st.title("🌿 Trình Chấm bài Ngữ văn Thông minh")
 
-# Lấy API Key từ Secrets (Không hiện ra giao diện nữa)
+# Lấy Key từ Secrets
 try:
+    # Đảm bảo tên trong ngoặc vuông này khớp y hệt tên bạn đặt trong Secrets
     api_key = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=api_key)
     
-    # Tự động lấy model khả dụng
-    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-    model_to_use = "gemini-1.5-flash" if any("1.5-flash" in m for m in available_models) else available_models[0]
-    model = genai.GenerativeModel(model_name=model_to_use)
+    # Gọi thẳng model 2.5 flash
+    model = genai.GenerativeModel('gemini-2.5-flash')
 
-    de_bai = st.text_input("Đề bài:", placeholder="Ví dụ: Phân tích Truyện Kiều...")
+    de_bai = st.text_input("Đề bài:", placeholder="Nhập đề bài tại đây...")
     bai_lam = st.text_area("Bài làm của học sinh:", height=300)
 
     if st.button("Bắt đầu chấm bài"):
         if bai_lam:
-            with st.spinner('AI đang phân tích bài làm...'):
+            with st.spinner('AI 2.5 đang chấm bài...'):
                 prompt = f"Bạn là giáo viên Văn. Hãy chấm bài dựa trên đề: {de_bai}. Nội dung: {bai_lam}. Trả về điểm và nhận xét."
                 response = model.generate_content(prompt)
                 st.success("Đã chấm xong!")
@@ -38,4 +37,5 @@ try:
             st.warning("Vui lòng nhập bài làm!")
             
 except Exception as e:
-    st.error("Hệ thống đang bảo trì hoặc thiếu API Key.")
+    st.error(f"Lỗi kết nối: {e}")
+    st.info("Kiểm tra lại xem bạn đã đặt tên GEMINI_API_KEY trong phần Secrets chưa nhé.")
