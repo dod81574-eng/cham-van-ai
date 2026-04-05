@@ -3,7 +3,7 @@ import google.generativeai as genai
 
 st.set_page_config(page_title="Chấm Ngữ Văn AI", layout="centered")
 
-# Giao diện xanh lá cho Khang
+# Giao diện xanh lá
 st.markdown("""
     <style>
     .stButton>button { background-color: #2e7d32 !important; color: white !important; border-radius: 10px; width: 100%; font-weight: bold; }
@@ -19,34 +19,36 @@ if api_key:
     try:
         genai.configure(api_key=api_key)
         
-        # Chiến thuật thử lần lượt các model để tránh lỗi 404
-        model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
-        model = None
+        # --- BƯỚC QUAN TRỌNG: TỰ ĐỘNG TÌM MODEL ---
+        # Code này sẽ tự lấy cái model đầu tiên mà tài khoản bạn được phép dùng
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         
-        for name in model_names:
-            try:
-                model = genai.GenerativeModel(name)
-                # Thử tạo một nội dung ngắn để test model có sống không
-                model.generate_content("test", generation_config={"max_output_tokens": 1})
-                break 
-            except:
-                continue
-
-        if model:
-            de_bai = st.text_input("Đề bài:")
+        if available_models:
+            # Ưu tiên lấy bản flash hoặc pro nếu có, không thì lấy cái đầu tiên
+            model_to_use = available_models[0]
+            for m in available_models:
+                if "1.5-flash" in m:
+                    model_to_use = m
+                    break
+            
+            model = genai.GenerativeModel(model_name=model_to_use)
+            st.sidebar.success(f"Đang dùng: {model_to_use}") # Hiện tên model cho bạn yên tâm
+            
+            de_bai = st.text_input("Đề bài:", placeholder="Ví dụ: Phân tích Truyện Kiều...")
             bai_lam = st.text_area("Bài làm của học sinh:", height=250)
             
             if st.button("Bắt đầu chấm bài"):
                 if bai_lam:
                     with st.spinner('Đang phân tích bài làm...'):
-                        prompt = f"Bạn là giáo viên Ngữ văn. Hãy chấm bài dựa trên đề: {de_bai}. Nội dung: {bai_lam}. Trả về điểm và nhận xét."
+                        prompt = f"Bạn là giáo viên Ngữ văn. Hãy chấm bài dựa trên đề: {de_bai}. Nội dung: {bai_lam}. Trả về điểm và nhận xét chi tiết."
                         response = model.generate_content(prompt)
-                        st.success("Xong!")
+                        st.success("Đã chấm xong!")
+                        st.markdown("---")
                         st.markdown(response.text)
                 else:
                     st.warning("Vui lòng nhập bài làm!")
         else:
-            st.error("Không tìm thấy model khả dụng. Hãy kiểm tra lại API Key của bạn.")
+            st.error("Tài khoản của bạn chưa có model nào khả dụng. Hãy thử tạo Key mới.")
             
     except Exception as e:
         st.error(f"Lỗi: {e}")
