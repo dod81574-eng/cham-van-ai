@@ -1,7 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-
-# Cấu hình trang web
 st.set_page_config(page_title="Chấm Ngữ Văn AI", layout="centered")
 
 # Giao diện màu xanh lá đặc trưng sư phạm
